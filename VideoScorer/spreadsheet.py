@@ -104,7 +104,27 @@ class Spreadsheet(tk.Frame):
         else:
             msg.showerror("ERROR", "No new column name provided")
     def configure(self):
-        msg.showerror('ERROR','Configure is not yet implemented')
+        popup = PopupEntryWindow(
+            self.container,
+            'Configure',
+            {
+                'File Template': dict(default=self.file_str_template)
+            }
+        )
+        self.container.wait_window(popup.frame)
+        if not hasattr(popup, 'values'):
+            # msg.showerror("ERROR", "pop window closed rudely")
+            return
+
+        file_template = popup.values.get('File Template','')
+        if not '{file}' in file_template:
+            print(file_template)
+            msg.showerror("ERROR", "Invalid template string provided")
+        else:
+            self.file_str_template = file_template
+            if hasattr(self, 'directory'):
+                matches = len(list(self.directory.glob(self.file_str_template.replace('{file}', '*'))))
+                msg.showinfo('INFO',f'Found {matches} file(s) matching the provided pattern')
     def help(self):
         msg.showerror('ERROR','Help is not yet implemented')
     def savefile(self):
