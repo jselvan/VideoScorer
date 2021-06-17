@@ -1,4 +1,7 @@
-from msvcrt import getch
+try:
+    from msvcrt import getch
+except ImportError:
+    def getch(): raise NotImplementedError
 from vlc import Instance, VideoMarqueeOption, EventType
 
 class VideoPlayer:
