@@ -3,6 +3,7 @@ from VideoScorer.scrollableframe import ScrollableFrame
 from VideoScorer.popup_entry_window import PopupEntryWindow
 
 from pathlib import Path
+from sys import platform
 
 import numpy as np
 import pandas as pd
@@ -29,15 +30,26 @@ class Spreadsheet(tk.Frame):
         self.video_player = VideoPlayer()
 
     def _create_menu(self):
-        self.menu_font = Font(family="Verdana", size=20)
         self.menubar = tk.Menu(self.container)
-        self.menubar.add_command(label='Open', command=self.filedialog)
-        self.menubar.add_command(label='Save', command=self.savefile)
-        self.menubar.add_command(label='Configure', command=self.configure)
-        self.menubar.add_command(label='New Column', command=self.new_column_gui)
-        self.menubar.add_command(label='Help', command=self.help)
+        self.menu_font = Font(family="Verdana", size=20)
         self.menubar.config(font=self.menu_font)
+        if platform == "darwin":
+            self.menubar_options = tk.Menu(self.container)
+            self.menubar_options.add_command(label='Open', command=self.filedialog)
+            self.menubar_options.add_command(label='Save', command=self.savefile)
+            self.menubar_options.add_command(label='Configure', command=self.configure)
+            self.menubar_options.add_command(label='New Column', command=self.new_column_gui)
+            self.menubar_options.add_command(label='Help', command=self.help)
+            self.menubar_options.config(font=self.menu_font)
+            self.menubar.add_cascade(label="Options", menu=self.menubar_options)
+        else:
+            self.menubar.add_command(label='Open', command=self.filedialog)
+            self.menubar.add_command(label='Save', command=self.savefile)
+            self.menubar.add_command(label='Configure', command=self.configure)
+            self.menubar.add_command(label='New Column', command=self.new_column_gui)
+            self.menubar.add_command(label='Help', command=self.help)
         self.container.config(menu=self.menubar)
+
     def _initialize(self):
         if hasattr(self, 'editor_frame'): self.editor_frame.destroy()
         self.editor_frame = ScrollableFrame(self)
