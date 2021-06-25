@@ -1,6 +1,7 @@
 from VideoScorer.videoplayer import VideoPlayer
 from VideoScorer.scrollableframe import ScrollableFrame
 from VideoScorer.popup_entry_window import PopupEntryWindow
+from VideoScorer.getlogger import getLogger
 
 from pathlib import Path
 from sys import platform
@@ -22,8 +23,11 @@ class Spreadsheet(tk.Frame):
     ORIGNAME = 'behaviour.csv'
     NEWNAME = 'behaviour_scored.csv'
     DIRECTIONS = {'<Left>': (-1,0), '<Right>': (1,0), '<Up>': (0,-1), '<Down>': (0,1)}
-    def __init__(self, container, *args, **kwargs):
+    def __init__(self, container, verbose=False, *args, **kwargs):
         super().__init__(container, *args, **kwargs)
+        logger_directory = Path('~/.videoscorer').expanduser()
+        if not logger_directory.is_dir(): logger_directory.mkdir()
+        self.logger = getLogger('VideoScorer', logger_directory/'main.log', printLevel='INFO' if verbose else 'WARN')
         self.container = container
         self._create_menu()
         self.file_str_template = '{file}.mp4'
@@ -81,6 +85,7 @@ class Spreadsheet(tk.Frame):
         )
         self.column_labels[column].grid(row=0,column=col+1,padx=self.PADX,pady=self.PADY)
         self.column_labels[column].bind('<Button-1>', lambda e: self.sort_by(column))
+        self.column_labels[column].bind('<Button-3>', lambda e: self.highlight_column(column))
         for row in range(len(self.data[column])):
             self.cells[row, col] = tk.Entry(self.editor, width=self.COLUMN_WIDTH)
             self.cells[row, col].grid(row=row+1,column=col+1,padx=self.PADX,pady=self.PADY)
@@ -156,7 +161,11 @@ class Spreadsheet(tk.Frame):
         self.data = pd.read_csv(filepath, header=[0], index_col=[0])
         self.filepath = new
         self.active = None
+        self.highlight = None
         self._initialize()
+    def highlight_column(self, column_name):
+        if self.highlight is not None: 
+            pass
     def new_column(self, column_name, default_value=''):
         self.data[column_name] = default_value
         self._add_column(column_name)
@@ -174,7 +183,9 @@ class Spreadsheet(tk.Frame):
         if self.active is not None: self.row_labels[self.active].configure(bg=self.UNSELECTED_COLOUR)
         self.row_labels[row].configure(bg=self.SELECTED_COLOUR)
         self.active = row
-        self.video_player.play_movie(self.directory/self.file_str_template.format(file=int(self.data.index[self.active])))
+        video_path = self.directory/self.file_str_template.format(file=int(self.data.index[self.active]))
+        self.logger.info(f"Loading video: {video_path.as_posix()}")
+        self.video_player.play_movie(video_path)
     def set_focus(self, event, direction, row, col):
         dx, dy = self.DIRECTIONS.get(direction)
         target_cell = row+dx, col+dy
